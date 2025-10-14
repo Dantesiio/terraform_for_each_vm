@@ -1,6 +1,10 @@
 resource "azurerm_resource_group" "main" {
     name     = "${var.prefix_name}-rg"
     location = var.region
+
+    tags = merge(var.tags, {
+        "component" = "resource-group"
+    })
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -8,6 +12,10 @@ resource "azurerm_virtual_network" "main" {
     location            = azurerm_resource_group.main.location
     resource_group_name = azurerm_resource_group.main.name
     address_space       = ["10.0.0.0/16"]
+
+    tags = merge(var.tags, {
+        "component" = "virtual-network"
+    })
 }
 
 resource "azurerm_subnet" "main" {
@@ -19,12 +27,14 @@ resource "azurerm_subnet" "main" {
 
 module "vm" {
     source = "./modules/vm"
-    servers = var.servers
-    size_servers = "Standard_DS1_v2"
+    servers             = var.servers
+    size_servers        = var.size_servers
+    admin_cidr_blocks   = var.admin_cidr_blocks
     resource_group_name = azurerm_resource_group.main.name
-    location = azurerm_resource_group.main.location
-    subnet_id = azurerm_subnet.main.id
-    prefix_name = var.prefix_name
-    user = var.user
-    password = var.password
+    location            = azurerm_resource_group.main.location
+    subnet_id           = azurerm_subnet.main.id
+    prefix_name         = var.prefix_name
+    user                = var.user
+    ssh_public_key      = var.ssh_public_key
+    tags                = var.tags
 }
